@@ -5,6 +5,8 @@ Project("{0761CBE4-1EB1-8D4D-ED2E-24A1104F517F}") = "Snowboard", "Assembly-CShar
 EndProject
 Project("{0761CBE4-1EB1-8D4D-ED2E-24A1104F517F}") = "Snowboard", "Assembly-CSharp.csproj", "{7136B68E-336B-63D9-BDCA-40AD6E0CEC77}"
 EndProject
+Project("{0761CBE4-1EB1-8D4D-ED2E-24A1104F517F}") = "Snowboard", "Assembly-CSharp-Editor.csproj", "{56E847BD-0564-AF03-B2E8-C25F4A1EC5A6}"
+EndProject
 Project("{0761CBE4-1EB1-8D4D-ED2E-24A1104F517F}") = "Snowboard", "Assembly-UnityScript-firstpass.unityproj", "{21C92178-C2CF-CE29-C515-B2F48EDA9D20}"
 EndProject
 Global
@@ -21,6 +23,10 @@ Global
 		{7136B68E-336B-63D9-BDCA-40AD6E0CEC77}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7136B68E-336B-63D9-BDCA-40AD6E0CEC77}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7136B68E-336B-63D9-BDCA-40AD6E0CEC77}.Release|Any CPU.Build.0 = Release|Any CPU
+		{56E847BD-0564-AF03-B2E8-C25F4A1EC5A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{56E847BD-0564-AF03-B2E8-C25F4A1EC5A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{56E847BD-0564-AF03-B2E8-C25F4A1EC5A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{56E847BD-0564-AF03-B2E8-C25F4A1EC5A6}.Release|Any CPU.Build.0 = Release|Any CPU
 		{21C92178-C2CF-CE29-C515-B2F48EDA9D20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{21C92178-C2CF-CE29-C515-B2F48EDA9D20}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{21C92178-C2CF-CE29-C515-B2F48EDA9D20}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -29,7 +35,7 @@ Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-																		GlobalSection(MonoDevelopProperties) = preSolution
+																														GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItem = Assembly-CSharp.csproj
 		Policies = $0
 		$0.TextStylePolicy = $1
