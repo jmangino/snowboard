@@ -12,6 +12,8 @@ public class CameraMotion : MonoBehaviour {
 	private Vector3 forward;
 	private Vector3 up1 = new Vector3(0,1,0);
 
+	//FIXME if player is going straight down, camera will go into player.If dir < threshold, pos relative to mesh?
+	//re above: pos always relative to mesh?
 	
 	// Use this for initialization
 	void Start () {

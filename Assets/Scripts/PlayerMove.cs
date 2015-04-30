@@ -4,12 +4,15 @@ using System.Collections;
 
 public class PlayerMove : MonoBehaviour {
 	//movement
-	private float ddmax = 0.35f;
 	private float dx =0, dy=0, dz=0;
-	private float ddx = 0f, ddy = -0.1f, ddz = 0f;
+	private float ddx = 0f, ddy = -0.15f, ddz = 0f;
+	//limits
 	private float dmax = 100;
+	private float ddmax = 0.35f;
+	private float dthetamax = 1.2f;
 	//angular
 	private float dtheta = 0.81f;
+	private float ddtheta = 1.2f;
 
 	//correction
 	private float ycorrect = 0.0f;
@@ -22,7 +25,6 @@ public class PlayerMove : MonoBehaviour {
 	public float DRAG = 0.001f; //add other kinds of drag?
 
 	int ground_mask = 1<<8;
-
 	//controls
 	private bool turnleft = false;
 	private bool turnright = false;
@@ -45,6 +47,8 @@ public class PlayerMove : MonoBehaviour {
 
 	RaycastHit r1, r2;
 	RaycastHit to_ground;
+
+	Vector3 up2 = new Vector3(0, 2, 0);
 	
 
 
@@ -76,38 +80,49 @@ public class PlayerMove : MonoBehaviour {
 			dy += ddy * Time.deltaTime;
 			//will hit ground
 			if ( to_ground.distance - dy < 0) {
-				dy = to_ground.distance + 0.01f;
+				transform.Translate (0, -to_ground.distance, 0);
+				//check normal of ground relative to movement? will determine if dy is conserved
+				dy = 0;
+				onground = true;
 			}
+			//in air, y is ballistic
+			transform.Translate (dx, dy, dz);
 		} else { //on ground
 			onground = true;
-			dy = 0;
 			findLocalGrad();
 			dx += ddx * Time.deltaTime;
 			dz += ddz * Time.deltaTime;
-
+			//on ground, y will be calculated using clipping
+			transform.Translate (dx, 0, dz);
 			//set local x,z rotation to reflect grad
 
 			//factor in max speed and drag?
 		}
-		transform.Translate (dx, dy, dz);
 		//correct y
 		ycorrect = 0;
 		if(onground){
-			Physics.Raycast (transform.position, -Vector3.up, out to_ground,10f, ground_mask);
-			ycorrect = to_ground.distance;
-			//gravity will naturally clip back to ground
-			if(ycorrect < yclipdown && ycorrect != 0){
-
-				ycorrect *= -1;
-			}else {
-				//clip up, fix this so I don't have to cast twice
-				Physics.Raycast (transform.position, Vector3.up, out to_ground,10f, ground_mask);
-				ycorrect = Mathf.Clamp(ycorrect, 0, yclipup);
+			bool hit = 	Physics.Raycast (transform.position + up2, -Vector3.up, out to_ground,10f, ground_mask);
+			//able to clip to ground
+			if(hit){
+				ycorrect =	to_ground.point.y - transform.position.y;
+Debug.Log (ycorrect);
+				//based on gravity, correction is plausible
+				if(Mathf.Abs(ycorrect - dy) <= 0.2){
+					Debug.Log ("clipping to ground");
+					transform.Translate (0, ycorrect+0.01f, 0);
+					dy = ycorrect;
+				}
 			}
-		}
-		transform.Translate (0, ycorrect, 0);
-
-	}
+			//gravity will naturally clip back to ground
+//			if(ycorrect < yclipdown && ycorrect != 0){
+//				ycorrect *= -1;
+//			}else {
+				//clip up, fix this so I don't have to cast twice
+//				Physics.Raycast (transform.position, Vector3.up, out to_ground,10f, ground_mask);
+//				ycorrect = Mathf.Clamp(ycorrect, 0, yclipup);
+//			}
+		}//end if onground
+	}//end of late update
 
 	void findLocalGrad(){
 		Vector3 position = transform.position; position.y += 1;
