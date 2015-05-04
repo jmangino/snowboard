@@ -1,11 +1,15 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-
+//TODO make it harder to rotate uphill, easier downhill
+//FIXME add lowspeed braking
+//FIXME clipping through ground after fall
+//could be setting dy to 0 makes shift too large, or ballistic is going through ground entirely
+//ballistic checks straight down w/o considering dx,dz
 public class PlayerMove : MonoBehaviour {
 	//movement
 	private float dx =0, dy=0, dz=0;
-	private float ddx = 0f, ddy = -0.15f, ddz = 0f;
+	private float ddx = 0f, ddy = -0.35f, ddz = 0f;
 	//limits
 	private float dmax = 100;
 	private float ddmax = 0.35f;
@@ -16,13 +20,13 @@ public class PlayerMove : MonoBehaviour {
 
 	//correction
 	private float ycorrect = 0.0f;
-	private float yclipup = 0.3f;
-	//FIXME causing jumps when -dy is too great, immediately slowing in air (keep track of dy?)
-	private float yclipdown = 0.2f;
 
 	//acceleration
-	public float SPEEDUP = 1f; //set elsewhere
-	public float DRAG = 0.001f; //add other kinds of drag?
+	public float SPEEDUP; //set elsewhere
+	public float DRAG; 
+	public float AIRDRAG;
+	private float drag_multiplier = 1f;
+	private float braking = 1f;
 
 	int ground_mask = 1<<8;
 	//controls
@@ -49,8 +53,12 @@ public class PlayerMove : MonoBehaviour {
 	RaycastHit to_ground;
 
 	Vector3 up2 = new Vector3(0, 2, 0);
-	
 
+
+	void OnCollisionEnter(Collision collision){
+		Vector3 v = collision.relativeVelocity;
+Debug.Log (v);
+	}
 
 	// Use this for initialization
 	void Start () {
@@ -71,7 +79,7 @@ public class PlayerMove : MonoBehaviour {
 	//Raycast after fixed update
 	void LateUpdate(){
 		useInputs ();
-		//ISSUE: move sideways then downs so always grounded.
+		//TODO instead of project straight down, factor in dx,dz (clipping through ground on ballistic falls)
 		Physics.Raycast (transform.position, -Vector3.up, out to_ground,100f, ground_mask);
 		//in air, NO HIT -> falling
 		if (to_ground.distance > 0.2f) {
@@ -90,13 +98,20 @@ public class PlayerMove : MonoBehaviour {
 		} else { //on ground
 			onground = true;
 			findLocalGrad();
+			//factor in drag
+			float drag = drag_multiplier * braking * DRAG;
+			ddx = ddx - drag * dx * dx * Mathf.Sign(dx);
+			ddz = ddz - drag * dz * dz * Mathf.Sign(dz);
+
 			dx += ddx * Time.deltaTime;
 			dz += ddz * Time.deltaTime;
-			//on ground, y will be calculated using clipping
-			transform.Translate (dx, 0, dz);
-			//set local x,z rotation to reflect grad
+			//factor in max speed
+			float speedsq = dx*dx + dz * dz;
+			if(speedsq > dmax * dmax){
 
-			//factor in max speed and drag?
+			}
+			//move after ddx,ddz,dx,dz are calculated
+			transform.Translate (dx, 0, dz);
 		}
 		//correct y
 		ycorrect = 0;
@@ -105,22 +120,12 @@ public class PlayerMove : MonoBehaviour {
 			//able to clip to ground
 			if(hit){
 				ycorrect =	to_ground.point.y - transform.position.y;
-Debug.Log (ycorrect);
 				//based on gravity, correction is plausible
-				if(Mathf.Abs(ycorrect - dy) <= 0.2){
-					Debug.Log ("clipping to ground");
+				if(Mathf.Abs(ycorrect - dy) <= 0.3){
 					transform.Translate (0, ycorrect+0.01f, 0);
 					dy = ycorrect;
 				}
 			}
-			//gravity will naturally clip back to ground
-//			if(ycorrect < yclipdown && ycorrect != 0){
-//				ycorrect *= -1;
-//			}else {
-				//clip up, fix this so I don't have to cast twice
-//				Physics.Raycast (transform.position, Vector3.up, out to_ground,10f, ground_mask);
-//				ycorrect = Mathf.Clamp(ycorrect, 0, yclipup);
-//			}
 		}//end if onground
 	}//end of late update
 
@@ -142,8 +147,7 @@ Debug.Log (ycorrect);
 		ddx *= SPEEDUP;
 
 	}
-
-	//TODO fix the directions to make them turn independent (90 deg sideways is messing up a lot)
+	
 	public Vector3 getDirection (){
 		return new Vector3(dx,dy,dz);
 	}
@@ -153,11 +157,7 @@ Debug.Log (ycorrect);
 		v.Normalize ();
 		return v;
 	}
-
-
-	public void OnCollisionEnter(Collision collision){
-
-	}
+	
 
 	private void useInputs(){
 		//ISSUE: register inputs to axis?-----------
@@ -178,6 +178,7 @@ Debug.Log (ycorrect);
 			//slow down
 			if(onground){
 				brake = true;
+				braking = 8;
 			}
 		}
 		if (Input.GetKeyUp (KeyCode.LeftArrow)) {
@@ -189,6 +190,7 @@ Debug.Log (ycorrect);
 		}
 		if (Input.GetKeyUp (KeyCode.DownArrow)) {
 			brake = false;
+			braking = 1;
 		}
 
 		//use inputs
@@ -209,11 +211,11 @@ Debug.Log (ycorrect);
 			//transform.Rotate(0,-theta*360.0f,0);
 		}
 		if (brake) {
-			//slow down (add drag)??
+
 		}
 
-	}
+	}//end late update
 
 
 
-}
+}//end class
