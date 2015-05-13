@@ -1,10 +1,8 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="MonoDevelop.Default" />
   <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\PlayerMove.cs">
     <Files>
-      <File FileName="Assets\Scripts\PlayerMove.cs" Line="46" Column="1" />
-      <File FileName="Assets\Scripts\BodyTurn.cs" Line="34" Column="40" />
-      <File FileName="Assets\Scripts\CameraMotion.cs" Line="36" Column="54" />
+      <File FileName="Assets\Scripts\PlayerMove.cs" Line="259" Column="20" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

@@ -6,6 +6,10 @@ using System.Collections;
 //FIXME clip through ground after jumping up at hill
 
 public class PlayerMove : MonoBehaviour {
+	//input
+	private int PLAYER = 0;
+	private string VERT ="";
+	private string HORIZ ="";
 	//movement
 	private float dx =0, dy=0, dz=0;
 	private float ddx = 0f, ddy = -0.35f, ddz = 0f;
@@ -69,6 +73,39 @@ public class PlayerMove : MonoBehaviour {
 	
 	//*** END GETTERS ***
 
+
+
+
+	// Use this for initialization
+	void Start () {
+		switch(gameObject.tag){
+		case "Player1": 
+			PLAYER = 1; 
+			VERT = "VerticalP1";
+			HORIZ = "HorizontalP1";
+			break;
+		case "Player2": 
+			PLAYER = 2; 
+			VERT = "VerticalP2";
+			HORIZ = "HorizontalP2";
+			break;
+		default: 
+			PLAYER = 1; 
+			VERT = "VerticalP1";
+			HORIZ = "HorizontalP1";
+			break;
+		}
+	}
+	
+	// Update is called once per frame
+	void Update () {
+	
+	}
+
+	void FixedUpdate(){
+
+	}
+
 	void OnCollisionEnter(Collision collision){
 		//TODO player to wipe out on hard collision
 		//FIXME player going through obj if normal is too close to vel
@@ -87,31 +124,14 @@ public class PlayerMove : MonoBehaviour {
 		Debug.Log ("scale: "+scale);
 		Vector3 vel = scale * Vector3.Reflect(-relative, normal);
 		dx = vel.x; dy = vel.y; dz = vel.z;
-
+		
 		//impact object2 
 		float angle = Mathf.Acos(Vector3.Dot (-relative, normal));
 		Vector3 vel2 = -relative * 2/(1+m2) * Mathf.Sin(angle /2);
 		collision.rigidbody.AddForce(vel2,ForceMode.Impulse);
-//		collision.rigidbody.velocity = vel2;
 		Debug.Log (vel2);
 	}
-
-
-	// Use this for initialization
-	void Start () {
-
-	}
 	
-	// Update is called once per frame
-	void Update () {
-	
-	}
-
-	void FixedUpdate(){
-
-	}
-
-
 
 	//Raycast after fixed update
 	void LateUpdate(){
@@ -192,7 +212,7 @@ public class PlayerMove : MonoBehaviour {
 
 
 	private void useInputs(){
-		//ISSUE: register inputs to axis?-----------
+		//KEY INPUTS
 		if (Input.GetKeyDown (KeyCode.LeftArrow)) {
 			turnleft = true;
 			turnright = false;
@@ -230,10 +250,16 @@ public class PlayerMove : MonoBehaviour {
 				transform.Translate (0, 0.31f, 0);
 			}
 		}
+		//AXES INPUTS
+		float vert = Input.GetAxis(VERT);
+		float horiz = Input.GetAxis(HORIZ);
+		//TODO axis intensity in controls
+		turnleft = horiz < 0;
+		turnright = horiz > 0;
+		brake = vert < 0;
 
-		//use inputs
-		//TODO add theta acceleration so turning doesn't seem so jerky
-		//TODO turning isn't perfectly aligned with player rotation, rotate player towards movement vector? 
+
+		//PROCESS INPUTS
 		if (turnleft && onground) {
 			dtheta = dtheta + ddtheta * Time.deltaTime;
 			dtheta = Mathf.Min(dtheta, dthetamax);
@@ -255,7 +281,7 @@ public class PlayerMove : MonoBehaviour {
 			braking = onground ? 8 : 1;
 		}
 
-	}//end late update
+	}//end inputs
 
 
 
