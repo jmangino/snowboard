@@ -3,20 +3,20 @@ using System.Collections;
 
 //TODO make it harder to rotate uphill, easier downhill
 //FIXME add lowspeed braking
-//FIXME clipping through ground after fall
-//could be setting dy to 0 makes shift too large, or ballistic is going through ground entirely
-//ballistic checks straight down w/o considering dx,dz
+//FIXME clip through ground after jumping up at hill
+
 public class PlayerMove : MonoBehaviour {
 	//movement
 	private float dx =0, dy=0, dz=0;
 	private float ddx = 0f, ddy = -0.35f, ddz = 0f;
 	//limits
-	private float dmax = 100;
-	private float ddmax = 0.35f;
-	private float dthetamax = 1.2f;
+	private static float dmax = 100;
+	private static float ddmax = 0.35f;
+	private static float dthetamax = 0.92f;
 	//angular
-	private float dtheta = 0.81f;
-	private float ddtheta = 1.2f;
+	private static float ddtheta = 0.55f;
+	private static float dthetanot = 0.45f;
+	private float dtheta = dthetanot;
 
 	//correction
 	private float ycorrect = 0.0f;
@@ -25,6 +25,7 @@ public class PlayerMove : MonoBehaviour {
 	public float SPEEDUP; //set elsewhere
 	public float DRAG; 
 	public float AIRDRAG;
+	private float JUMP = 0.12f;
 	private float drag_multiplier = 1f;
 	private float braking = 1f;
 
@@ -55,10 +56,46 @@ public class PlayerMove : MonoBehaviour {
 	Vector3 up2 = new Vector3(0, 2, 0);
 
 
-	void OnCollisionEnter(Collision collision){
-		Vector3 v = collision.relativeVelocity;
-Debug.Log (v);
+	//*** GETTERS ***
+	public Vector3 getDirection (){
+		return new Vector3(dx,dy,dz);
 	}
+	
+	public Vector3 getLookDirection (){
+		Vector3 v = new Vector3 (dx, 0, dz);
+		v.Normalize ();
+		return v;
+	}
+	
+	//*** END GETTERS ***
+
+	void OnCollisionEnter(Collision collision){
+		//TODO player to wipe out on hard collision
+		//FIXME player going through obj if normal is too close to vel
+		Vector3 relative = collision.rigidbody.velocity - new Vector3(dx,dy,dz);
+		ContactPoint[] contacts =  collision.contacts;
+		Vector3 normal = new Vector3();
+		foreach (ContactPoint p in contacts){
+			normal += p.normal;
+		}
+		normal.Normalize();
+		Debug.Log ("deflection: "+Vector3.Reflect(-relative, normal));
+		float m2 = collision.rigidbody.mass;
+		//TODO we are assuming player mass is 1
+		float scale = 1 + Mathf.Pow(m2,2)+2*m2*Vector3.Dot(relative, normal);
+		scale = Mathf.Sqrt(scale) / (1+m2);
+		Debug.Log ("scale: "+scale);
+		Vector3 vel = scale * Vector3.Reflect(-relative, normal);
+		dx = vel.x; dy = vel.y; dz = vel.z;
+
+		//impact object2 
+		float angle = Mathf.Acos(Vector3.Dot (-relative, normal));
+		Vector3 vel2 = -relative * 2/(1+m2) * Mathf.Sin(angle /2);
+		collision.rigidbody.AddForce(vel2,ForceMode.Impulse);
+//		collision.rigidbody.velocity = vel2;
+		Debug.Log (vel2);
+	}
+
 
 	// Use this for initialization
 	void Start () {
@@ -82,17 +119,21 @@ Debug.Log (v);
 		//TODO instead of project straight down, factor in dx,dz (clipping through ground on ballistic falls)
 		Physics.Raycast (transform.position, -Vector3.up, out to_ground,100f, ground_mask);
 		//in air, NO HIT -> falling
-		if (to_ground.distance > 0.2f) {
+		if (to_ground.distance > 0.03f) {
 			onground = false;
 			//dy = dy + ddy * dt
 			dy += ddy * Time.deltaTime;
 			//will hit ground
-			if ( to_ground.distance - dy < 0) {
-				transform.Translate (0, -to_ground.distance, 0);
+			if ( to_ground.distance + dy <= 0.03f) {
+				transform.Translate (0, -to_ground.distance+0.01f, 0);
 				//check normal of ground relative to movement? will determine if dy is conserved
 				dy = 0;
 				onground = true;
 			}
+			//airdrag
+			float drag =  AIRDRAG;
+			ddx = ddx - drag * dx * dx * Mathf.Sign(dx);
+			ddz = ddz - drag * dz * dz * Mathf.Sign(dz);
 			//in air, y is ballistic
 			transform.Translate (dx, dy, dz);
 		} else { //on ground
@@ -106,9 +147,10 @@ Debug.Log (v);
 			dx += ddx * Time.deltaTime;
 			dz += ddz * Time.deltaTime;
 			//factor in max speed
-			float speedsq = dx*dx + dz * dz;
-			if(speedsq > dmax * dmax){
-
+			float speed = Mathf.Sqrt (dx*dx + dz * dz);
+			if(speed > dmax ){
+				dx = (dmax/speed) * dx;
+				dz = (dmax/speed) * dz;
 			}
 			//move after ddx,ddz,dx,dz are calculated
 			transform.Translate (dx, 0, dz);
@@ -147,71 +189,70 @@ Debug.Log (v);
 		ddx *= SPEEDUP;
 
 	}
-	
-	public Vector3 getDirection (){
-		return new Vector3(dx,dy,dz);
-	}
 
-	public Vector3 getLookDirection (){
-		Vector3 v = new Vector3 (dx, 0, dz);
-		v.Normalize ();
-		return v;
-	}
-	
 
 	private void useInputs(){
 		//ISSUE: register inputs to axis?-----------
 		if (Input.GetKeyDown (KeyCode.LeftArrow)) {
-			if(onground){
-				turnleft = true;
-				turnright = false;
-			}
+			turnleft = true;
+			turnright = false;
 		}
 		if (Input.GetKeyDown (KeyCode.RightArrow)) {
 			//rotate dx,dz right
-			if(onground){
-				turnright = true;
-				turnleft = false;
-			}
+			turnright = true;
+			turnleft = false;
 		}
 		if (Input.GetKeyDown (KeyCode.DownArrow)) {
 			//slow down
-			if(onground){
-				brake = true;
-				braking = 8;
-			}
+			brake = true;
 		}
 		if (Input.GetKeyUp (KeyCode.LeftArrow)) {
+			//stop turn left
 			turnleft = false;
+			dtheta = dthetanot;
 		}
 
 		if (Input.GetKeyUp (KeyCode.RightArrow)) {
+			//stop turn right
 			turnright = false;
+			dtheta = dthetanot;
 		}
 		if (Input.GetKeyUp (KeyCode.DownArrow)) {
+			//stop brake
 			brake = false;
 			braking = 1;
+		}
+		if(Input.GetKeyUp (KeyCode.Space)){
+			//jump
+			if(onground){
+				dy = Mathf.Min(dy+JUMP, JUMP);
+				onground = false;
+				transform.Translate (0, 0.31f, 0);
+			}
 		}
 
 		//use inputs
 		//TODO add theta acceleration so turning doesn't seem so jerky
 		//TODO turning isn't perfectly aligned with player rotation, rotate player towards movement vector? 
-		if (turnleft) {
+		if (turnleft && onground) {
+			dtheta = dtheta + ddtheta * Time.deltaTime;
+			dtheta = Mathf.Min(dtheta, dthetamax);
 			float theta = dtheta * Time.deltaTime;
 			float tempdx = dx;
 			dx = Mathf.Cos(theta) * dx - Mathf.Sin(theta) * dz;
 			dz = Mathf.Cos (theta) * dz + Mathf.Sin(theta) * tempdx;
-			//transform.Rotate(0,-theta*360.0f,0);
 		}
-		if (turnright) {
+		if (turnright && onground) {
+			dtheta = dtheta + ddtheta * Time.deltaTime;
+			dtheta = Mathf.Min(dtheta, dthetamax);
 			float theta = -1 * dtheta * Time.deltaTime;
 			float tempdx = dx;
 			dx = Mathf.Cos(theta) * dx - Mathf.Sin(theta) * dz;
 			dz = Mathf.Cos (theta) * dz + Mathf.Sin(theta) * tempdx;
-			//transform.Rotate(0,-theta*360.0f,0);
 		}
 		if (brake) {
-
+			//change drag factor
+			braking = onground ? 8 : 1;
 		}
 
 	}//end late update
