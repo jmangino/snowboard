@@ -265,7 +265,7 @@ public class PlayerMove : MonoBehaviour {
 			turn_strength = Mathf.Abs(horiz);
 			brake = vert < 0;
 			//1 to 0 with a strong emphasis towards 0 (no brake)
-			brake_strength = 1 - Mathf.Pow(vert, 2);
+			brake_strength = Mathf.Pow(vert, 2);
 		}
 
 		//PROCESS INPUTS
