@@ -10,6 +10,9 @@ public class PlayerMove : MonoBehaviour {
 	private int PLAYER = 0;
 	private string VERT ="";
 	private string HORIZ ="";
+	private bool gamepads = false;
+	private float turn_strength=1;
+	private float brake_strength=1;
 	//movement
 	private float dx =0, dy=0, dz=0;
 	private float ddx = 0f, ddy = -0.35f, ddz = 0f;
@@ -95,6 +98,7 @@ public class PlayerMove : MonoBehaviour {
 			HORIZ = "HorizontalP1";
 			break;
 		}
+		gamepads = Input.GetJoystickNames().Length > 1;
 	}
 	
 	// Update is called once per frame
@@ -251,17 +255,22 @@ public class PlayerMove : MonoBehaviour {
 			}
 		}
 		//AXES INPUTS
-		float vert = Input.GetAxis(VERT);
-		float horiz = Input.GetAxis(HORIZ);
-		//TODO axis intensity in controls
-		turnleft = horiz < 0;
-		turnright = horiz > 0;
-		brake = vert < 0;
-
+		if(gamepads){
+			float vert = Input.GetAxis(VERT);
+			float horiz = Input.GetAxis(HORIZ);
+			//TODO axis intensity in controls
+			turnleft = horiz < 0;
+			turnright = horiz > 0;
+			//stronger horizontal 0 to 1 -> % turn strength
+			turn_strength = Mathf.Abs(horiz);
+			brake = vert < 0;
+			//1 to 0 with a strong emphasis towards 0 (no brake)
+			brake_strength = 1 - Mathf.Pow(vert, 2);
+		}
 
 		//PROCESS INPUTS
 		if (turnleft && onground) {
-			dtheta = dtheta + ddtheta * Time.deltaTime;
+			dtheta = dtheta + ddtheta * Time.deltaTime * turn_strength;
 			dtheta = Mathf.Min(dtheta, dthetamax);
 			float theta = dtheta * Time.deltaTime;
 			float tempdx = dx;
@@ -269,7 +278,7 @@ public class PlayerMove : MonoBehaviour {
 			dz = Mathf.Cos (theta) * dz + Mathf.Sin(theta) * tempdx;
 		}
 		if (turnright && onground) {
-			dtheta = dtheta + ddtheta * Time.deltaTime;
+			dtheta = dtheta + ddtheta * Time.deltaTime * turn_strength;
 			dtheta = Mathf.Min(dtheta, dthetamax);
 			float theta = -1 * dtheta * Time.deltaTime;
 			float tempdx = dx;
@@ -278,7 +287,7 @@ public class PlayerMove : MonoBehaviour {
 		}
 		if (brake) {
 			//change drag factor
-			braking = onground ? 8 : 1;
+			braking = onground ? (12 * brake_strength) : 1;
 		}
 
 	}//end inputs
