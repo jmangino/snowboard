@@ -13,7 +13,7 @@ public class SpeedText : MonoBehaviour {
 		UnityEngine.UI.Text text = GetComponent<UnityEngine.UI.Text> ();
 		GameObject player = GameObject.FindGameObjectWithTag ("Player");
 		PlayerMove pm = player.GetComponent<PlayerMove> ();
-		Vector3 speed = pm.getDirection ();
+		Vector3 speed = pm.getVelocity ();
 		speed.y = 0;
 		text.text = "Speed: "+(int)(speed.magnitude*100)+" km/h";
 	}

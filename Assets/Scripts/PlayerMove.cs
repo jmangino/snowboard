@@ -19,10 +19,10 @@ public class PlayerMove : MonoBehaviour {
 	//limits
 	private static float dmax = 100;
 	private static float ddmax = 0.35f;
-	private static float dthetamax = 0.92f;
+	private static float dthetamax = 0.99f;
 	//angular
-	private static float ddtheta = 0.55f;
-	private static float dthetanot = 0.45f;
+	private static float ddtheta = 0.59f;
+	private static float dthetanot = 0.49f;
 	private float dtheta = dthetanot;
 
 	//correction
@@ -64,7 +64,7 @@ public class PlayerMove : MonoBehaviour {
 
 
 	//*** GETTERS ***
-	public Vector3 getDirection (){
+	public Vector3 getVelocity (){
 		return new Vector3(dx,dy,dz);
 	}
 	
@@ -120,12 +120,10 @@ public class PlayerMove : MonoBehaviour {
 			normal += p.normal;
 		}
 		normal.Normalize();
-		Debug.Log ("deflection: "+Vector3.Reflect(-relative, normal));
 		float m2 = collision.rigidbody.mass;
 		//TODO we are assuming player mass is 1
 		float scale = 1 + Mathf.Pow(m2,2)+2*m2*Vector3.Dot(relative, normal);
 		scale = Mathf.Sqrt(scale) / (1+m2);
-		Debug.Log ("scale: "+scale);
 		Vector3 vel = scale * Vector3.Reflect(-relative, normal);
 		dx = vel.x; dy = vel.y; dz = vel.z;
 		

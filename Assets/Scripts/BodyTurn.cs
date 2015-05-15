@@ -37,9 +37,9 @@ public class BodyTurn : MonoBehaviour {
 
 	void LateUpdate(){
 		//make sure xzspeed is fast enough to get a useful direction vec
-		Vector3 vel = pm.getDirection();
+		Vector3 vel = pm.getVelocity();
 		vel.Set(vel.x, 0, vel.z);
-		slow = vel.magnitude < 0.01;
+		slow = vel.magnitude < 0.008;
 		//TODO CHANGE THIS IF DX DZ IS EVER RECALCULATED
 
 		if(slow){
